@@ -1,5 +1,7 @@
 package com.microservice_example.stock_service.service;
 
+import com.microservice_example.stock_service.dto.OrderItemDto;
+import com.microservice_example.stock_service.dto.OrderResponseDto;
 import com.microservice_example.stock_service.dto.StockRequestDto;
 import com.microservice_example.stock_service.dto.StockResponseDto;
 import com.microservice_example.stock_service.model.Stock;
@@ -8,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -61,6 +64,23 @@ public class StockServiceImpl implements StockService {
 
 
         return availableItems == stockRequestDtoList.size();
+    }
+
+    @Override
+    public void updateStockQty(OrderResponseDto orderResponseDto) {
+        Map<Long, OrderItemDto> orderItemDtoMap = orderResponseDto.getOrderItems()
+                .stream()
+                .collect(Collectors.toMap(OrderItemDto::getProductId, Function.identity()));
+
+        List<Stock> stocks = new ArrayList<>();
+        stockRepository.findAllByProductIdIn(orderItemDtoMap.keySet().stream().toList())
+                        .forEach(stock -> {
+                            BigDecimal deductQty = orderItemDtoMap.get(stock.getProductId()).getQty();
+                            stock.setQty(stock.getQty().subtract(deductQty));
+                            stocks.add(stock);
+                        });
+
+        stockRepository.saveAll(stocks);
     }
 
     public StockResponseDto mapToResponseDto(Stock stock) {

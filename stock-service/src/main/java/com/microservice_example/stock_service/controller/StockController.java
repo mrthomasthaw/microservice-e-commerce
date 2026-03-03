@@ -1,20 +1,27 @@
 package com.microservice_example.stock_service.controller;
 
+import com.microservice_example.stock_service.dto.EventMessage;
 import com.microservice_example.stock_service.dto.StockRequestDto;
 import com.microservice_example.stock_service.dto.StockResponseDto;
+import com.microservice_example.stock_service.rabbitmq.producer.RabbitMQProducer;
 import com.microservice_example.stock_service.service.StockService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/stock")
 @RequiredArgsConstructor
+@Slf4j
 public class StockController {
 
     private final StockService stockService;
+
+    private final RabbitMQProducer rabbitMQProducer;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -33,5 +40,12 @@ public class StockController {
     @ResponseStatus(HttpStatus.OK)
     public boolean isAllStockAvailable(@RequestBody List<StockRequestDto> dtoList) {
         return stockService.isAllStockAvailable(dtoList);
+    }
+
+    @GetMapping("/publish")
+    public String sendMessage(@RequestParam("message") String message) {
+        rabbitMQProducer.sendMessage(new EventMessage<String>("stock.update-failed", null, LocalDateTime.now()),
+                "stock.update-failed");
+        return "Message send";
     }
 }

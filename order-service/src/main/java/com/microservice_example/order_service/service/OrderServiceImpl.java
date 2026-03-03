@@ -6,11 +6,13 @@ import com.microservice_example.order_service.model.OrderItem;
 import com.microservice_example.order_service.open_feign_client.CustomerClient;
 import com.microservice_example.order_service.open_feign_client.ProductClient;
 import com.microservice_example.order_service.open_feign_client.StockClient;
+import com.microservice_example.order_service.rabbitmq.producer.RabbitMQProducer;
 import com.microservice_example.order_service.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -27,6 +29,8 @@ public class OrderServiceImpl implements OrderService {
     private final ProductClient productClient;
 
     private final CustomerClient customerClient;
+
+    private final RabbitMQProducer rabbitMQProducer;
 
     @Override
     public void createOrder(OrderRequestDto orderRequestDto) {
@@ -56,6 +60,9 @@ public class OrderServiceImpl implements OrderService {
                         });
 
         orderRepository.save(order);
+
+        rabbitMQProducer.sendMessage(new EventMessage<OrderResponseDto>("order.created", mapToOrderResponseDto(order), LocalDateTime.now()),
+                "order.created");
     }
 
     private void calculateEachItemTotalAmount(OrderItemDto orderItemDto, Map<Long, ProductResponseDto> productResponseDtoMap) {
