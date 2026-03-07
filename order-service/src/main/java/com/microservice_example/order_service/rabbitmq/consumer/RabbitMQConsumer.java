@@ -36,7 +36,6 @@ public class RabbitMQConsumer {
             log.info("Stock update failed event from stock service");
         }
 
-
         log.info(String.format("Received Message: %s", message));
     }
 

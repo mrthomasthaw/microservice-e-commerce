@@ -8,7 +8,10 @@ import com.microservice_example.order_service.open_feign_client.ProductClient;
 import com.microservice_example.order_service.open_feign_client.StockClient;
 import com.microservice_example.order_service.rabbitmq.producer.RabbitMQProducer;
 import com.microservice_example.order_service.repository.OrderRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
@@ -32,25 +36,31 @@ public class OrderServiceImpl implements OrderService {
 
     private final RabbitMQProducer rabbitMQProducer;
 
+    @CircuitBreaker(name = "stock", fallbackMethod = "onStockServiceFailToResponse")
+    //@TimeLimiter(name = "stock")
     @Override
     public void createOrder(OrderRequestDto orderRequestDto) {
         List<StockRequestDto> stockRequestDtoList = orderRequestDto.getOrderItems().stream()
-                .map(this::mapToStockRequestDto)
+                .map(orderItemDto -> mapToStockRequestDto(orderItemDto, orderRequestDto.getShopId()))
                 .toList();
+
 
         if(! stockClient.isAllStockAvailable(stockRequestDtoList)) {
             throw new IllegalStateException("Out of stock");
         }
 
         Order order = new Order();
+        order.setShopId(orderRequestDto.getShopId());
         order.setCustomerId(orderRequestDto.getCustomerId());
         order.setOrderNo(orderRepository.findLastOne()
                 .map(this::generateFormCode)
                 .orElse("O-0001"));
+        order.setOrderDate(LocalDateTime.now());
 
         Map<Long, ProductResponseDto> productResponseDtoMap = productClient.getAllProducts()
                         .stream()
                         .collect(Collectors.toMap(ProductResponseDto::getId, Function.identity()));
+
 
         orderRequestDto.getOrderItems()
                         .forEach(orderItemDto -> {
@@ -63,6 +73,11 @@ public class OrderServiceImpl implements OrderService {
 
         rabbitMQProducer.sendMessage(new EventMessage<OrderResponseDto>("order.created", mapToOrderResponseDto(order), LocalDateTime.now()),
                 "order.created");
+    }
+
+    public void onStockServiceFailToResponse(OrderRequestDto orderRequestDto, RuntimeException e) {
+        log.info("Problem with stock service");
+        throw e;
     }
 
     private void calculateEachItemTotalAmount(OrderItemDto orderItemDto, Map<Long, ProductResponseDto> productResponseDtoMap) {
@@ -124,7 +139,9 @@ public class OrderServiceImpl implements OrderService {
         OrderResponseDto orderResponseDto = new OrderResponseDto();
         orderResponseDto.setId(order.getId());
         orderResponseDto.setOrderNo(order.getOrderNo());
+        orderResponseDto.setShopId(order.getShopId());
         orderResponseDto.setCustomerId(order.getCustomerId());
+        orderResponseDto.setOrderDate(order.getOrderDate());
 
         orderResponseDto.setOrderItems(order.getOrderItems()
                 .stream()
@@ -142,8 +159,9 @@ public class OrderServiceImpl implements OrderService {
         return orderItemDto;
     }
 
-    private StockRequestDto mapToStockRequestDto(OrderItemDto orderItemDto) {
+    private StockRequestDto mapToStockRequestDto(OrderItemDto orderItemDto, Long shopId) {
         return StockRequestDto.builder()
+                .shopId(shopId)
                 .productId(orderItemDto.getProductId())
                 .qty(orderItemDto.getQty())
                 .build();

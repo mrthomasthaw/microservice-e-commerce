@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body>
+    <nav class="navbar" style="background-color: rgb(92 105 119) !important;">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">Shop</span>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <!-- As a heading -->
+
+<!--        <div class="card">-->
+<!--            <div class="card-header">-->
+<!--                Shop-->
+<!--            </div>-->
+<!--            <div class="card-body">-->
+<!--                <form>-->
+<!--                    <div class="row">-->
+<!--                        <div class="col-6">-->
+<!--                            <label for="" class="form-label">Customer</label>-->
+<!--                            <select class="form-control" id="customer-id">-->
+<!--                                <option value="">&#45;&#45;Select One&#45;&#45;</option>-->
+<!--                            </select>-->
+<!--                        </div>-->
+<!--                        <div class="col-6">-->
+<!--                            <label for="" class="form-label">Product</label>-->
+<!--                            <select class="form-control" id="product-id">-->
+<!--                                <option value="">&#45;&#45;Select One&#45;&#45;</option>-->
+<!--                            </select>-->
+<!--                        </div>-->
+<!--                        <div class="col-6">-->
+<!--                            <label for="" class="form-label">Qty</label>-->
+<!--                            <input type="number" class="form-control" id="qty">-->
+<!--                        </div>-->
+<!--                        <div class="col-6">-->
+<!--                            <label for="" class="form-label">Price</label>-->
+<!--                            <input type="number" class="form-control" disabled id="price" />-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </form>-->
+<!--            </div>-->
+<!--        </div>-->
+
+        <div class="pt-4 row row-cols-1 row-cols-md-4 g-4">
+            <div class="col">
+                <div class="card">
+                    <img th:src="@{/image/laptop.jfif}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Card title</h5>
+                        <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <img th:src="@{/image/phone.jfif}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Card title</h5>
+                        <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <img th:src="@{/image/tent.jpg}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Card title</h5>
+                        <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <img th:src="@{/image/guns.jfif}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Card title</h5>
+                        <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn-script.com/ajax/libs/jquery/3.7.1/jquery.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+    <script>
+        $(document).ready(function() {
+            alert("ready")
+            $('#customer-id').select2({
+                ajax: {
+                    url: 'http://localhost:8080/api/customer',
+                    type: 'GET',
+                    contentType: 'application/json',
+                    data: function (params) {
+
+                        var query = {
+
+                        }
+
+                        // Query parameters will be ?search=[term]&page=[page]
+                        return query;
+                    },
+                    processResults: function (data, params) {
+                        params.page = params.page || 1;
+
+                        return {
+                            results: data.map(u => ({
+                                id: u.id,
+                                text: u.name
+                            })),
+                            pagination: {
+                                more: (params.page * params.length) < data.recordsFiltered
+                            }
+                        };
+                    }
+                }
+            });
+
+            $('#product-id').select2({
+                ajax: {
+                    url: 'http://localhost:8080/api/product',
+                    type: 'GET',
+                    contentType: 'application/json',
+                    data: function (params) {
+
+                        var query = {
+
+                        }
+
+                        // Query parameters will be ?search=[term]&page=[page]
+                        return query;
+                    },
+                    processResults: function (data, params) {
+                        params.page = params.page || 1;
+
+                        return {
+                            results: data.map(u => ({
+                                id: u.id,
+                                text: u.name
+                            })),
+                            pagination: {
+                                more: (params.page * params.length) < data.recordsFiltered
+                            }
+                        };
+                    }
+                }
+            });
+
+            $('#product-id').on('select2:select', function(e) {
+                $.ajax({
+                    url: 'http://localhost:8080/api/product/' + $(this).val(),
+                    type: 'GET',
+                    success : function(product) {
+                        if(product) {
+                            $("#price").val(product.price);
+                        }
+                        else {
+                            $("#price").val('');
+                        }
+                    }
+                })
+            })
+        })
+    </script>
+</body>
+</html>

@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class StockRequestDto {
 
+    private Long shopId;
     private Long productId;
     private BigDecimal qty;
 

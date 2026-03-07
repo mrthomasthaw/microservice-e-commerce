@@ -4,6 +4,7 @@ import com.microservice_example.stock_service.dto.EventMessage;
 import com.microservice_example.stock_service.dto.OrderResponseDto;
 import com.microservice_example.stock_service.rabbitmq.producer.RabbitMQProducer;
 import com.microservice_example.stock_service.service.StockService;
+import com.microservice_example.stock_service.util.CommonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -25,10 +26,8 @@ public class RabbitMQConsumer {
         log.info("message received: {}", message);
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            OrderResponseDto orderResponseDto = objectMapper.convertValue(message.data(), OrderResponseDto.class);
             if(message.eventName().equals("order.created")) {
-                stockService.updateStockQty(orderResponseDto);
+                stockService.updateStockQty(CommonUtil.convertValue(message.data(), OrderResponseDto.class));
                 rabbitMQProducer.sendMessage(new EventMessage<OrderResponseDto>("stock.updated", null, LocalDateTime.now()),
                         "stock.updated");
             }

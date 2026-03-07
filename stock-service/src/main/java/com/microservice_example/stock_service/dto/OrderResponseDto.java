@@ -15,6 +15,7 @@ import java.util.List;
 public class OrderResponseDto {
     private Long id;
     private String orderNo;
+    private Long shopId;
     private Long customerId;
     private String customerName;
     private List<OrderItemDto> orderItems = new ArrayList<>();

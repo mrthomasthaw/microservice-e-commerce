@@ -15,4 +15,5 @@ public class ProductRequestDto {
     private String name;
     private String description;
     private BigDecimal price;
+    private Long shopId;
 }

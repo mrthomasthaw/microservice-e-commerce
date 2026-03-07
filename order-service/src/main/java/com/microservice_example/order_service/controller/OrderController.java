@@ -5,7 +5,11 @@ import com.microservice_example.order_service.dto.OrderResponseDto;
 import com.microservice_example.order_service.rabbitmq.consumer.RabbitMQConsumer;
 import com.microservice_example.order_service.rabbitmq.producer.RabbitMQProducer;
 import com.microservice_example.order_service.service.OrderService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +20,7 @@ import java.util.List;
 @RequestMapping("/api/order")
 public class OrderController {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderController.class);
     private final OrderService orderService;
 
     private final RabbitMQProducer rabbitMQProducer;

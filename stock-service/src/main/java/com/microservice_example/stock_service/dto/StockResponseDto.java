@@ -15,6 +15,7 @@ public class StockResponseDto {
 
     private Long id;
     private String stockCode;
+    private Long shopId;
     private Long productId;
     private BigDecimal qty;
 }

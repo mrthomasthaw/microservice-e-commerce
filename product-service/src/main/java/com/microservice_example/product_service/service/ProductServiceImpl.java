@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +27,7 @@ public class ProductServiceImpl implements ProductService {
                 .name(productRequestDto.getName())
                 .description(productRequestDto.getDescription())
                 .price(productRequestDto.getPrice())
+                .shopId(productRequestDto.getShopId())
                 .build();
 
         productRepository.save(product);
@@ -46,6 +48,11 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
+    @Override
+    public Optional<ProductResponseDto> getById(Long id) {
+        return productRepository.findById(id).map(this::mapToProductResponse);
+    }
+
     public ProductResponseDto mapToProductResponse(Product product) {
         return ProductResponseDto.builder()
                 .id(product.getId())
@@ -53,6 +60,7 @@ public class ProductServiceImpl implements ProductService {
                 .productCode(product.getProductCode())
                 .description(product.getDescription())
                 .price(product.getPrice())
+                .shopId(product.getShopId())
                 .build();
     }
 }

@@ -17,4 +17,5 @@ public class ProductResponseDto {
     private String productCode;
     private String description;
     private BigDecimal price;
+    private Long shopId;
 }

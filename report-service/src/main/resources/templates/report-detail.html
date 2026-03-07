@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body>
+
+
+<div class="container-fluid">
+
+    <div class="card mt-4">
+        <div class="card-title">
+
+        </div>
+        <div class="card-body">
+            <h3>Order Detail Report</h3>
+            <form th:action="@{/report/detail-report}" method="POST" th:object="${reportRequestDto}">
+                <div class="row">
+                    <input type="hidden" th:field="*{reportType}">
+                    <div class="col-6 mb-3">
+                        <label for="" class="form-label">Customer</label>
+                        <select th:field="*{customerName}" class="form-control">
+                            <option value="">--All--</option>
+                            <option th:each="customer :${customers}" th:value="${customer.name}" th:text="${customer.name}">--All--</option>
+                        </select>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label for="" class="form-label">Product</label>
+                        <select th:field="*{productCode}" class="form-control">
+                            <option value="">--All--</option>
+                            <option th:each="product :${products}" th:value="${product.productCode}" th:text="${product.productCode}">--All--</option>
+                        </select>
+                    </div>
+
+                    <div class="col-6 mb-3">
+                        <label for="" class="form-label">Product</label>
+                        <select th:field="*{shopName}" class="form-control">
+                            <option value="">--All--</option>
+                            <option th:each="shop :${shops}" th:value="${shop.shopName}" th:text="${shop.shopName}">--All--</option>
+                        </select>
+                    </div>
+
+                    <div class="col-6 mb-3">
+                        <label for="" class="form-label">From Order Date</label>
+                        <input type="date" class="form-control" th:field="*{fromOrderDate}">
+                    </div>
+
+                    <div class="col-6 mb-3">
+                        <label for="" class="form-label">To Order Date</label>
+                        <input type="date" class="form-control" th:field="*{toOrderDate}">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn-script.com/ajax/libs/jquery/3.7.1/jquery.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+    <script>
+        $(document).ready(function () {
+
+        })
+    </script>
+</div>
+</body>
+</html>

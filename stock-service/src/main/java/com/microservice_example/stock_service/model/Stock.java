@@ -9,7 +9,10 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "t_stock")
+@Table(name = "t_stock", uniqueConstraints = {@UniqueConstraint(
+        name = "uk_shop_product",
+        columnNames = {"shop_id", "product_id"}
+)})
 @Data
 @Builder
 @AllArgsConstructor
@@ -20,10 +23,10 @@ public class Stock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique=true)
-    private String stockCode;
+    @Column(name = "shop_id")
+    private Long shopId;
 
-    @Column(unique=true)
+    @Column(name = "product_id")
     private Long productId;
 
     private BigDecimal qty;
