@@ -13,7 +13,7 @@ import java.util.Optional;
 
 
 @RestController
-@RequestMapping("/api/shop")
+@RequestMapping("/api/shops")
 @RequiredArgsConstructor
 @Slf4j
 public class ShopController {

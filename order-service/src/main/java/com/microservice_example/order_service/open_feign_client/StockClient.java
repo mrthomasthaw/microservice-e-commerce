@@ -12,10 +12,10 @@ import java.util.List;
 @FeignClient(value = "stock-service")
 public interface StockClient {
 
-    @RequestMapping(method = RequestMethod.GET, value = "/api/stock")
+    @RequestMapping(method = RequestMethod.GET, value = "/api/stocks")
     List<StockResponseDto> getAllStock();
 
-    @RequestMapping(method = RequestMethod.POST, value = "/api/stock/check-stock")
+    @RequestMapping(method = RequestMethod.POST, value = "/api/stocks/check-stock")
     boolean isAllStockAvailable(@RequestBody List<StockRequestDto> stockRequestDtoList);
 
 }

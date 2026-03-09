@@ -13,10 +13,10 @@ import java.util.Optional;
 @FeignClient(name = "customer-service")
 public interface CustomerClient {
 
-    @RequestMapping(method = RequestMethod.GET, value = "/api/customer")
+    @RequestMapping(method = RequestMethod.GET, value = "/api/customers")
     List<CustomerResponseDto> getAllCustomers();
 
-    @RequestMapping(method = RequestMethod.GET, value = "/api/customer/{id}")
+    @RequestMapping(method = RequestMethod.GET, value = "/api/customers/{id}")
     Optional<CustomerResponseDto> getCustomerById(@PathVariable("id") Long id);
 
 }

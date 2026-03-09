@@ -5,11 +5,11 @@ import com.microservice_example.order_service.model.Order;
 import com.microservice_example.order_service.model.OrderItem;
 import com.microservice_example.order_service.open_feign_client.CustomerClient;
 import com.microservice_example.order_service.open_feign_client.ProductClient;
+import com.microservice_example.order_service.open_feign_client.ShopClient;
 import com.microservice_example.order_service.open_feign_client.StockClient;
 import com.microservice_example.order_service.rabbitmq.producer.RabbitMQProducer;
 import com.microservice_example.order_service.repository.OrderRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -34,7 +35,11 @@ public class OrderServiceImpl implements OrderService {
 
     private final CustomerClient customerClient;
 
+    private final ShopClient shopClient;
+
     private final RabbitMQProducer rabbitMQProducer;
+
+    private final ExternalAPIService externalAPIService;
 
     @CircuitBreaker(name = "stock", fallbackMethod = "onStockServiceFailToResponse")
     //@TimeLimiter(name = "stock")
@@ -45,7 +50,7 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
 
 
-        if(! stockClient.isAllStockAvailable(stockRequestDtoList)) {
+        if(!  stockClient.isAllStockAvailable(stockRequestDtoList)) {
             throw new IllegalStateException("Out of stock");
         }
 
@@ -75,6 +80,7 @@ public class OrderServiceImpl implements OrderService {
                 "order.created");
     }
 
+
     public void onStockServiceFailToResponse(OrderRequestDto orderRequestDto, RuntimeException e) {
         log.info("Problem with stock service");
         throw e;
@@ -86,19 +92,23 @@ public class OrderServiceImpl implements OrderService {
         orderItemDto.setTotalAmount(totalAmount);
     }
 
+    //@CircuitBreaker(name = "shop", fallbackMethod = "getOrderList")
     @Override
     public List<OrderResponseDto> getAllOrders() {
-        Map<Long, StockResponseDto> stockResponseDtoMap = stockClient.getAllStock()
-                .stream()
-                .collect(Collectors.toMap(StockResponseDto::getProductId, Function.identity()));
 
-        Map<Long, ProductResponseDto> productResponseDtoMap = productClient.getAllProducts()
-                .stream()
-                .collect(Collectors.toMap(ProductResponseDto::getId, Function.identity()));
+        CompletableFuture<Map<Long, ShopResponseDto>> shopFutureResponse = externalAPIService.getShopListFutureResponse();
 
-        Map<Long, CustomerResponseDto> customerResponseDtoMap = customerClient.getAllCustomers()
+        CompletableFuture<Map<Long, ProductResponseDto>> productFutureResponse = externalAPIService.getProductListFutureResponse();
+
+        CompletableFuture<Map<Long, CustomerResponseDto>> customerFutureResponse = CompletableFuture.supplyAsync(() -> customerClient.getAllCustomers()
                 .stream()
-                .collect(Collectors.toMap(CustomerResponseDto::getId, Function.identity()));
+                .collect(Collectors.toMap(CustomerResponseDto::getId, Function.identity())));
+
+        CompletableFuture.allOf(productFutureResponse, customerFutureResponse).join();
+
+        Map<Long, ShopResponseDto> shopResponseDtoMap = shopFutureResponse.join();
+        Map<Long, ProductResponseDto> productResponseDtoMap = productFutureResponse.join();
+        Map<Long, CustomerResponseDto> customerResponseDtoMap = customerFutureResponse.join();
 
         List<OrderResponseDto> orderList = orderRepository.findAll()
                 .stream()
@@ -108,20 +118,30 @@ public class OrderServiceImpl implements OrderService {
         for(OrderResponseDto orderResponseDto : orderList) {
             setCustomer(orderResponseDto, customerResponseDtoMap);
 
+            setShop(orderResponseDto, shopResponseDtoMap);
+
             for(OrderItemDto orderItemDto : orderResponseDto.getOrderItems()) {
                 setOrderItemDtoProduct(orderItemDto, productResponseDtoMap);
-
-                setOrderItemDtoStock(orderItemDto, stockResponseDtoMap);
             }
         }
 
         return orderList;
     }
 
-    private void setOrderItemDtoStock(OrderItemDto orderItemDto, Map<Long, StockResponseDto> stockResponseDtoMap) {
-        StockResponseDto stockResponseDto = stockResponseDtoMap.get(orderItemDto.getProductId());
-        orderItemDto.setStockCode(stockResponseDto.getStockCode());
+
+
+    private void setShop(OrderResponseDto orderResponseDto, Map<Long, ShopResponseDto> shopResponseDtoMap) {
+        var shopResponseDto = shopResponseDtoMap.get(orderResponseDto.getShopId());
+        orderResponseDto.setShopName(shopResponseDto != null ? shopResponseDto.getShopName() : null);
     }
+
+    private List<OrderResponseDto> getOrderList(RuntimeException e) {
+        return orderRepository.findAll()
+                .stream()
+                .map(this::mapToOrderResponseDto)
+                .toList();
+    }
+
 
     private void setOrderItemDtoProduct(OrderItemDto orderItemDto, Map<Long, ProductResponseDto> productResponseDtoMap) {
         ProductResponseDto productResponseDto = productResponseDtoMap.get(orderItemDto.getProductId());

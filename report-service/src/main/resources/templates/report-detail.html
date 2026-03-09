@@ -24,14 +24,12 @@
                     <div class="col-6 mb-3">
                         <label for="" class="form-label">Customer</label>
                         <select th:field="*{customerName}" class="form-control">
-                            <option value="">--All--</option>
                             <option th:each="customer :${customers}" th:value="${customer.name}" th:text="${customer.name}">--All--</option>
                         </select>
                     </div>
                     <div class="col-6 mb-3">
                         <label for="" class="form-label">Product</label>
                         <select th:field="*{productCode}" class="form-control">
-                            <option value="">--All--</option>
                             <option th:each="product :${products}" th:value="${product.productCode}" th:text="${product.productCode}">--All--</option>
                         </select>
                     </div>
@@ -39,7 +37,6 @@
                     <div class="col-6 mb-3">
                         <label for="" class="form-label">Product</label>
                         <select th:field="*{shopName}" class="form-control">
-                            <option value="">--All--</option>
                             <option th:each="shop :${shops}" th:value="${shop.shopName}" th:text="${shop.shopName}">--All--</option>
                         </select>
                     </div>

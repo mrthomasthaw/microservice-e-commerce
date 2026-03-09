@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/stock")
+@RequestMapping("/api/stocks")
 @RequiredArgsConstructor
 @Slf4j
 public class StockController {

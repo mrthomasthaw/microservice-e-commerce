@@ -13,6 +13,6 @@ import java.util.List;
 @FeignClient(name = "product-service")
 public interface ProductClient {
 
-    @RequestMapping(method = RequestMethod.GET, value = "/api/product")
+    @RequestMapping(method = RequestMethod.GET, value = "/api/products")
     List<ProductResponseDto> getAllProducts();
 }

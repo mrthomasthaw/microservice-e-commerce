@@ -10,6 +10,6 @@ import java.util.List;
 @FeignClient(name = "customer-service")
 public interface CustomerClient {
 
-    @RequestMapping(method = RequestMethod.GET, value = "/api/customer")
+    @RequestMapping(method = RequestMethod.GET, value = "/api/customers")
     List<CustomerResponseDto> getAllCustomers();
 }

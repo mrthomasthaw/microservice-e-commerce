@@ -12,7 +12,7 @@ public class OrderItemDto {
     private Long productId;
     private String productCode;
     private String productName;
-    private String stockCode;
+    //private String stockCode;
     private BigDecimal qty;
     private BigDecimal totalAmount;
 }
