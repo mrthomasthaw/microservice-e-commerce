@@ -7,6 +7,7 @@ import com.microservice_example.stock_service.dto.StockResponseDto;
 import com.microservice_example.stock_service.model.Stock;
 import com.microservice_example.stock_service.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StockServiceImpl implements StockService {
 
     private final StockRepository stockRepository;
@@ -46,7 +48,7 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
-    public boolean isAllStockAvailable(List<StockRequestDto> stockRequestDtoList) {
+    public boolean isAllStockAvailable(List<StockRequestDto> stockRequestDtoList) throws InterruptedException {
         List<Long> productIdList = stockRequestDtoList.stream()
                 .map(StockRequestDto::getProductId)
                 .toList();

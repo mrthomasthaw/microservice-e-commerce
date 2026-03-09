@@ -41,7 +41,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductResponseDto> getAllProducts() {
+    public List<ProductResponseDto> getAllProducts() throws InterruptedException {
+//        log.info("start waiting for products");
+//        Thread.sleep(100000);
+//        log.info("end waiting for products");
+
         return productRepository.findAll()
                 .stream()
                 .map(this::mapToProductResponse)

@@ -26,7 +26,7 @@ public class ProductController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<ProductResponseDto> getAllProducts() {
+    public List<ProductResponseDto> getAllProducts() throws InterruptedException {
         return productService.getAllProducts();
     }
 

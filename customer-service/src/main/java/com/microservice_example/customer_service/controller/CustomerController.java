@@ -20,7 +20,7 @@ public class CustomerController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<CustomerResponseDto> getAllCustomers() {
+    public List<CustomerResponseDto> getAllCustomers() throws InterruptedException {
         return customerService.getAllCustomers();
     }
 

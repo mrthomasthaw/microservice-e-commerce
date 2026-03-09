@@ -11,7 +11,7 @@ public interface StockService {
 
     void createStock(StockRequestDto stockRequestDto);
 
-    boolean isAllStockAvailable(List<StockRequestDto> stockRequestDtoList);
+    boolean isAllStockAvailable(List<StockRequestDto> stockRequestDtoList) throws InterruptedException;
 
     void updateStockQty(OrderResponseDto orderResponseDto);
 }

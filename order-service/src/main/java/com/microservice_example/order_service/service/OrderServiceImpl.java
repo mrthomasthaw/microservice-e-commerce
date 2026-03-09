@@ -41,7 +41,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final ExternalAPIService externalAPIService;
 
-    @CircuitBreaker(name = "stock", fallbackMethod = "onStockServiceFailToResponse")
+    //@CircuitBreaker(name = "stock", fallbackMethod = "onStockServiceFailToResponse")
     //@TimeLimiter(name = "stock")
     @Override
     public void createOrder(OrderRequestDto orderRequestDto) {
@@ -49,8 +49,9 @@ public class OrderServiceImpl implements OrderService {
                 .map(orderItemDto -> mapToStockRequestDto(orderItemDto, orderRequestDto.getShopId()))
                 .toList();
 
+        Boolean isAllStockAvailable = externalAPIService.checkAllStockAvailableFutureResponse(stockRequestDtoList).join();
 
-        if(!  stockClient.isAllStockAvailable(stockRequestDtoList)) {
+        if(! isAllStockAvailable) {
             throw new IllegalStateException("Out of stock");
         }
 
@@ -100,9 +101,7 @@ public class OrderServiceImpl implements OrderService {
 
         CompletableFuture<Map<Long, ProductResponseDto>> productFutureResponse = externalAPIService.getProductListFutureResponse();
 
-        CompletableFuture<Map<Long, CustomerResponseDto>> customerFutureResponse = CompletableFuture.supplyAsync(() -> customerClient.getAllCustomers()
-                .stream()
-                .collect(Collectors.toMap(CustomerResponseDto::getId, Function.identity())));
+        CompletableFuture<Map<Long, CustomerResponseDto>> customerFutureResponse = externalAPIService.getCustomerListFutureResponse();
 
         CompletableFuture.allOf(productFutureResponse, customerFutureResponse).join();
 
@@ -146,13 +145,15 @@ public class OrderServiceImpl implements OrderService {
     private void setOrderItemDtoProduct(OrderItemDto orderItemDto, Map<Long, ProductResponseDto> productResponseDtoMap) {
         ProductResponseDto productResponseDto = productResponseDtoMap.get(orderItemDto.getProductId());
 
-        orderItemDto.setProductCode(productResponseDto.getProductCode());
-        orderItemDto.setProductName(productResponseDto.getName());
+        if(productResponseDto != null) {
+            orderItemDto.setProductCode(productResponseDto.getProductCode());
+            orderItemDto.setProductName(productResponseDto.getName());
+        }
     }
 
     private void setCustomer(OrderResponseDto orderResponseDto, Map<Long, CustomerResponseDto> customerResponseDtoMap) {
         CustomerResponseDto customerResponseDto = customerResponseDtoMap.get(orderResponseDto.getCustomerId());
-        orderResponseDto.setCustomerName(customerResponseDto.getName());
+        orderResponseDto.setCustomerName(customerResponseDto != null ? customerResponseDto.getName() : null);
     }
 
     private OrderResponseDto mapToOrderResponseDto(Order order) {

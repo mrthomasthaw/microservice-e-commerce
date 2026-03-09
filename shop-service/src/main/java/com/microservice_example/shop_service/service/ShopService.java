@@ -10,7 +10,7 @@ public interface ShopService {
 
     void createShop(ShopRequestDto shopRequestDto);
 
-    List<ShopResponseDto> getAllShops();
+    List<ShopResponseDto> getAllShops() throws InterruptedException;
 
     Optional<ShopResponseDto> getShopById(Long id);
 }

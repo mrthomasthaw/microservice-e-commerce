@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface ProductService {
     void createProduct(ProductRequestDto productRequestDto);
 
-    List<ProductResponseDto> getAllProducts();
+    List<ProductResponseDto> getAllProducts() throws InterruptedException;
 
     Optional<ProductResponseDto> getById(Long id);
 }

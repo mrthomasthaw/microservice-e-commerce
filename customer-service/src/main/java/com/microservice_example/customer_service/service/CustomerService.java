@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface CustomerService {
     void createCustomer(CustomerRequestDto customerRequestDto);
 
-    List<CustomerResponseDto> getAllCustomers();
+    List<CustomerResponseDto> getAllCustomers() throws InterruptedException;
 
     Optional<CustomerResponseDto> getCustomerById(Long id);
 }

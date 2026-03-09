@@ -22,8 +22,7 @@ public class ShopController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<ShopResponseDto> getShops() {
-        log.info("get shops");
+    public List<ShopResponseDto> getShops() throws InterruptedException {
         return shopService.getAllShops();
     }
 
