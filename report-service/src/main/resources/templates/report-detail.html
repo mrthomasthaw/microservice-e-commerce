@@ -18,41 +18,43 @@
         </div>
         <div class="card-body">
             <h3>Order Detail Report</h3>
-            <form th:action="@{/report/detail-report}" method="POST" th:object="${reportRequestDto}">
+            <form id="report-detail-form">
                 <div class="row">
-                    <input type="hidden" th:field="*{reportType}">
                     <div class="col-6 mb-3">
                         <label for="" class="form-label">Customer</label>
-                        <select th:field="*{customerName}" class="form-control">
+                        <select  class="form-control">
+                            <option value="">--All--</option>
                             <option th:each="customer :${customers}" th:value="${customer.name}" th:text="${customer.name}">--All--</option>
                         </select>
                     </div>
                     <div class="col-6 mb-3">
                         <label for="" class="form-label">Product</label>
-                        <select th:field="*{productCode}" class="form-control">
+                        <select class="form-control">
+                            <option value="">--All--</option>
                             <option th:each="product :${products}" th:value="${product.productCode}" th:text="${product.productCode}">--All--</option>
                         </select>
                     </div>
 
                     <div class="col-6 mb-3">
                         <label for="" class="form-label">Product</label>
-                        <select th:field="*{shopName}" class="form-control">
+                        <select  class="form-control">
+                            <option value="">--All--</option>
                             <option th:each="shop :${shops}" th:value="${shop.shopName}" th:text="${shop.shopName}">--All--</option>
                         </select>
                     </div>
 
                     <div class="col-6 mb-3">
                         <label for="" class="form-label">From Order Date</label>
-                        <input type="date" class="form-control" th:field="*{fromOrderDate}">
+                        <input type="date" class="form-control" >
                     </div>
 
                     <div class="col-6 mb-3">
                         <label for="" class="form-label">To Order Date</label>
-                        <input type="date" class="form-control" th:field="*{toOrderDate}">
+                        <input type="date" class="form-control" >
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="button" id="report-submit-btn" class="btn btn-primary">Submit</button>
             </form>
         </div>
     </div>
@@ -63,8 +65,68 @@
 
     <script>
         $(document).ready(function () {
+            $("#report-submit-btn").on("click", function(e) {
+                e.preventDefault();
+                const requestData = {
+                    customerName: $("#customerName").val(),
+                    productCode: $("#productCode").val(),
+                    shopName: $("#shopName").val(),
+                    fromOrderDate: $("#fromOrderDate").val(),
+                    toOrderDate: $("#toOrderDate").val()
+                };
 
+                $.ajax({
+                    url: "/report-jobs",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(requestData),
+                    success: function(response) {
+
+                        alert("Report generation started!");
+
+                        const jobId = response;
+
+                        console.log("Job ID:", jobId);
+
+                        checkReportStatus(jobId);
+                    },
+                    error: function(err) {
+                        alert("Failed to start report generation");
+                        console.error(err);
+                    }
+                });
+            })
         })
+
+        function checkReportStatus(jobId) {
+
+            const interval = setInterval(function () {
+
+                $.get("/report-jobs/" + jobId + "/status", function(response) {
+
+                    console.log("Status:", response);
+
+                    if (response === "COMPLETED") {
+
+                        clearInterval(interval);
+
+                        alert("Report is ready!");
+
+                        window.location.href = "/reports/" + jobId + "/download";
+                    }
+
+                    if (response === "FAILED") {
+
+                        clearInterval(interval);
+
+                        alert("Report generation failed.");
+                    }
+
+                });
+
+            }, 3000);
+
+        }
     </script>
 </div>
 </body>

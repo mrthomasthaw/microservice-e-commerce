@@ -39,9 +39,10 @@ public class StockController {
     @PostMapping("/check-stock")
     @ResponseStatus(HttpStatus.OK)
     public boolean isAllStockAvailable(@RequestBody List<StockRequestDto> dtoList) throws InterruptedException {
-        log.info("stock available start wait");
-        Thread.sleep(30000);
-        log.info("stock available end wait");
+//        log.info("stock available start wait");
+//        Thread.sleep(30000);
+//        log.info("stock available end wait");
+
         return stockService.isAllStockAvailable(dtoList);
     }
 

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Repository
 public interface ReportRepository extends JpaRepository<OrderHistory, Long> {
@@ -54,4 +55,36 @@ public interface ReportRepository extends JpaRepository<OrderHistory, Long> {
         """, nativeQuery = true)
     List<Object[]> findOrderHistoryByDetailFilter(@Param("customerName") String customerName, @Param("productCode") String productCode,
                                            @Param("shopName") String shopName, @Param("fromDate")LocalDate fromDate, @Param("toDate") LocalDate toDate);
+
+    @Query(value = """
+        Select oh.id, oh.order_no, oh.product_code, oh.product_name, oh.qty, DATE(oh.order_date), oh.shop_name, oh.shop_address
+        From t_order_history oh
+        Where (:fromDate is null Or DATE(oh.order_date) >= :fromDate)
+        And (:toDate is null Or DATE(oh.order_date) <= :toDate)
+        And (:customerName is null Or :customerName = '' Or oh.customer_name = :customerName)
+        And (:productCode is null Or :productCode = '' Or oh.product_code = :productCode)
+        And (:shopName is null Or :shopName = '' Or oh.shop_name = :shopName)
+        And (:lastId is null Or oh.Id < :lastId)
+        Order By oh.order_no Desc
+        Limit :limit
+        """, nativeQuery = true)
+    List<Object[]> findOrderHistoryByDetailFilter(@Param("customerName") String customerName, @Param("productCode") String productCode,
+                                                  @Param("shopName") String shopName, @Param("fromDate")LocalDate fromDate, @Param("toDate") LocalDate toDate,
+                                                  @Param("limit") Integer limit, @Param("lastId") Long lastId);
+
+
+    @Query(value = """
+        Select oh.order_no, oh.product_code, oh.product_name, oh.qty, DATE(oh.order_date), oh.shop_name, oh.shop_address 
+        From t_order_history oh
+        Where (:fromDate is null Or DATE(oh.order_date) >= :fromDate)
+        And (:toDate is null Or DATE(oh.order_date) <= :toDate)
+        And (:customerName is null Or :customerName = '' Or oh.customer_name = :customerName)
+        And (:productCode is null Or :productCode = '' Or oh.product_code = :productCode)
+        And (:shopName is null Or :shopName = '' Or oh.shop_name = :shopName)
+        Order By oh.order_no Desc
+        """, nativeQuery = true)
+    Stream<Object[]> findOrderHistoryStreamByDetailFilter(@Param("customerName") String customerName, @Param("productCode") String productCode,
+                                                    @Param("shopName") String shopName, @Param("fromDate")LocalDate fromDate, @Param("toDate") LocalDate toDate);
+
+
 }

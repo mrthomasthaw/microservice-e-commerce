@@ -45,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
     //@TimeLimiter(name = "stock")
     @Override
     public void createOrder(OrderRequestDto orderRequestDto) {
+        log.info("create order.....");
         List<StockRequestDto> stockRequestDtoList = orderRequestDto.getOrderItems().stream()
                 .map(orderItemDto -> mapToStockRequestDto(orderItemDto, orderRequestDto.getShopId()))
                 .toList();

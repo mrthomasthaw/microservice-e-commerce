@@ -8,21 +8,34 @@ import com.microservice_example.report_service.open_feign_client.ShopClient;
 import com.microservice_example.report_service.repository.ReportRepository;
 import com.microservice_example.report_service.util.CommonExcelUtil;
 import com.microservice_example.report_service.util.ReportType;
+import io.netty.util.internal.ObjectCleaner;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReportServiceImpl implements ReportService {
 
     private final ReportRepository reportRepository;
@@ -105,12 +118,13 @@ public class ReportServiceImpl implements ReportService {
                         "Total Product"
                 ), list, outputStream);
             }
-
             case ReportType.DETAIL_REPORT -> {
                 List<Object[]> list = reportRepository.findOrderHistoryByDetailFilter(
                         reportRequestDto.getCustomerName(), reportRequestDto.getProductCode(),
-                        reportRequestDto.getShopName(), reportRequestDto.getFromOrderDate(), reportRequestDto.getToOrderDate());
+                        reportRequestDto.getShopName(), reportRequestDto.getFromOrderDate(), reportRequestDto.getToOrderDate()
+                        );
 
+                log.info("Fetched row " + list.size());
                 CommonExcelUtil.writeToExcel(List.of(
                         "No",
                         "Order No",
@@ -124,6 +138,147 @@ public class ReportServiceImpl implements ReportService {
             }
         }
     }
+
+    @Transactional(readOnly = true)
+    @Override
+    public void exportExcelDetailReport(ReportRequestDto reportRequestDto, OutputStream outputStream) throws IOException {
+        Stream<Object[]> reportStream = reportRepository.findOrderHistoryStreamByDetailFilter(
+                    reportRequestDto.getCustomerName(), reportRequestDto.getProductCode(),
+                    reportRequestDto.getShopName(), reportRequestDto.getFromOrderDate(), reportRequestDto.getToOrderDate()
+                    );
+
+        CommonExcelUtil.writeToExcel(List.of(
+                "No",
+                "Order No",
+                "Product Code",
+                "Product Name",
+                "Qty",
+                "Order Date",
+                "Shop",
+                "Shop Address"
+        ), reportStream, outputStream);
+    }
+
+//    @Transactional(readOnly = true)
+//    @Override
+//    public void exportExcelDetailReport(ReportRequestDto reportRequestDto, OutputStream outputStream) throws IOException {
+//        AtomicLong count = new AtomicLong(0);
+//        try (SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
+//
+//            log.info("Exporting in batch...");
+//            Sheet sheet = workbook.createSheet("Report");
+//
+//            // Header row
+//            Row header = sheet.createRow(0);
+//            header.createCell(0).setCellValue("No");
+//            header.createCell(1).setCellValue("Order No");
+//            header.createCell(2).setCellValue("Product Code");
+//            header.createCell(3).setCellValue("Product Name");
+//            header.createCell(4).setCellValue("Qty");
+//            header.createCell(5).setCellValue("Order Date");
+//            header.createCell(6).setCellValue("Shop");
+//            header.createCell(7).setCellValue("Shop Address");
+//
+//            AtomicInteger rowNum = new AtomicInteger(1);
+//
+//
+//            try(Stream<Object[]> rows = reportRepository.findOrderHistoryStreamByDetailFilter(
+//                    reportRequestDto.getCustomerName(), reportRequestDto.getProductCode(),
+//                    reportRequestDto.getShopName(), reportRequestDto.getFromOrderDate(), reportRequestDto.getToOrderDate()
+//                    ))
+//            {
+//
+//                log.info("Fetching in batch...");
+//
+//                rows.forEach(rowData -> {
+//                    log.info("Writing to excel " + count.getAndIncrement());
+//
+//                    Row row = sheet.createRow(rowNum.get());
+//                    row.createCell(0).setCellValue(rowNum.get() + 1);
+//                    row.createCell(1).setCellValue(rowData[0].toString());
+//                    row.createCell(2).setCellValue(rowData[1].toString());
+//                    row.createCell(3).setCellValue(rowData[2].toString());
+//                    row.createCell(4).setCellValue(rowData[3].toString());
+//                    row.createCell(5).setCellValue(rowData[4].toString());
+//                    row.createCell(6).setCellValue(rowData[5].toString());
+//                    row.createCell(7).setCellValue(rowData[6].toString());
+//
+//                    rowNum.getAndIncrement();
+//                });
+//
+//            }
+//
+//            workbook.write(outputStream);
+//            outputStream.flush();
+//
+//            log.info("Writing in batch...");
+//        }
+//    }
+
+
+//    @Override
+//    public void exportExcelDetailReport(ReportRequestDto reportRequestDto, OutputStream outputStream) throws IOException {
+//        AtomicLong count = new AtomicLong(0);
+//        try (SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
+//
+//            log.info("Exporting in batch...");
+//            Sheet sheet = workbook.createSheet("Report");
+//
+//            // Header row
+//            Row header = sheet.createRow(0);
+//            header.createCell(0).setCellValue("No");
+//            header.createCell(1).setCellValue("Order No");
+//            header.createCell(2).setCellValue("Product Code");
+//            header.createCell(3).setCellValue("Product Name");
+//            header.createCell(4).setCellValue("Qty");
+//            header.createCell(5).setCellValue("Order Date");
+//            header.createCell(6).setCellValue("Shop");
+//            header.createCell(7).setCellValue("Shop Address");
+//
+//            AtomicInteger rowNum = new AtomicInteger(1);
+//
+//            int batchSize = 5000;
+//            Long lastId = null;
+//            while(true)
+//            {
+//                List<Object[]> rows = reportRepository.findOrderHistoryByDetailFilter(reportRequestDto.getCustomerName(), reportRequestDto.getProductCode(),
+//                                        reportRequestDto.getShopName(), reportRequestDto.getFromOrderDate(), reportRequestDto.getToOrderDate(),
+//                                        batchSize, lastId);
+//
+//                log.info("Fetching in batch...");
+//
+//                if(rows.isEmpty()) break;
+//
+//                for (Object[] rowData : rows) {
+//                    log.info("Writing to excel " + count.getAndIncrement());
+//
+//                    Row row = sheet.createRow(rowNum.get());
+//                    row.createCell(0).setCellValue(rowNum.get() + 1);
+//                    row.createCell(1).setCellValue(rowData[1].toString());
+//                    row.createCell(2).setCellValue(rowData[2].toString());
+//                    row.createCell(3).setCellValue(rowData[3].toString());
+//                    row.createCell(4).setCellValue(rowData[4].toString());
+//                    row.createCell(5).setCellValue(rowData[5].toString());
+//                    row.createCell(6).setCellValue(rowData[6].toString());
+//                    row.createCell(7).setCellValue(rowData[7].toString());
+//
+//                    rowNum.getAndIncrement();
+//
+//                    lastId = (Long) rowData[0];
+//                }
+//
+//                //lastId = (Long) rows.get(rows.size() - 1)[0];
+//                log.info("Last Id : " + lastId);
+//            }
+//
+//            workbook.write(outputStream);
+//            outputStream.flush();
+//
+//            log.info("Writing in batch...");
+//        }
+//    }
+
+
 
     @Transactional
     public void generateDataset(int totalRows) {
@@ -156,4 +311,45 @@ public class ReportServiceImpl implements ReportService {
         entityManager.flush();
         entityManager.clear();
     }
+
+    @Override
+    public InputStreamResource downloadFile(String jobId) throws IOException {
+        Path path = Paths.get("reports/" + jobId + ".xlsx");
+
+        log.info("Path " + path.toString());
+
+        log.info("Abs Path " + path.toAbsolutePath());
+
+
+
+        if(! Files.exists(path)) {
+            throw new FileNotFoundException(path.toString());
+        }
+
+        return new InputStreamResource(Files.newInputStream(path));
+    }
+
+//    @Override
+//    public void downloadFile(String jobId, OutputStream outputStream) throws IOException {
+//        Path path = Paths.get("reports/" + jobId + ".xlsx");
+//
+//        log.info("Path " + path.toString());
+//
+//        log.info("Abs Path " + path.toAbsolutePath());
+//
+//
+//        if(Files.exists(path)) {
+//
+//            try(InputStream inputStream = Files.newInputStream(path)) {
+//                outputStream.write(inputStream.readAllBytes());
+//            } catch (IOException e) {
+//                log.error(e.getMessage());
+//                e.printStackTrace();
+//            }
+//        }
+//        else {
+//            throw new FileNotFoundException("File not found");
+//        }
+//
+//    }
 }

@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -37,7 +39,6 @@ public class ExternalAPIService {
 
     @CircuitBreaker(name = "shop", fallbackMethod = "getEmptyShopList")
     @TimeLimiter(name = "shop")
-    @Bulkhead(name = "shop", type = Bulkhead.Type.THREADPOOL)
     public @NotNull CompletableFuture<Map<Long, ShopResponseDto>> getShopListFutureResponse() {
         return CompletableFuture.supplyAsync(() -> shopClient.getAllShops()
                 .stream()
@@ -72,14 +73,15 @@ public class ExternalAPIService {
         return CompletableFuture.completedFuture(Collections.emptyMap());
     }
 
-    @CircuitBreaker(name = "stock")
+    @CircuitBreaker(name = "stock", fallbackMethod = "checkAllStockAvailableFailRemoteCall")
     @TimeLimiter(name = "stock")
     @Retry(name = "stock")
     public @NotNull CompletableFuture<Boolean> checkAllStockAvailableFutureResponse(List<StockRequestDto> stockRequestDtoList) {
+        System.out.println("calling stock");
         return CompletableFuture.supplyAsync(() -> stockClient.isAllStockAvailable(stockRequestDtoList));
     }
 
-//    private CompletableFuture<Boolean> checkAllStockAvailableFailRemoteCall(RuntimeException e) {
-//        return CompletableFuture.completedFuture(() -> ;throw new RuntimeException(""));
-//    }
+    private CompletableFuture<Boolean> checkAllStockAvailableFailRemoteCall(RuntimeException e) {
+        return CompletableFuture.completedFuture(null);
+    }
 }

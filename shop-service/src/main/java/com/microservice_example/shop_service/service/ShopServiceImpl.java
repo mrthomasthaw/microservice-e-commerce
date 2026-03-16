@@ -40,9 +40,9 @@ public class ShopServiceImpl implements ShopService {
 
     @Override
     public List<ShopResponseDto> getAllShops() throws InterruptedException {
-        log.info("start waiting for shops");
-        Thread.sleep(100000);
-        log.info("end waiting for shops");
+//        log.info("start waiting for shops");
+//        Thread.sleep(100000);
+//        log.info("end waiting for shops");
 
         Map<Long, List<ProductResponseDto>> productResponseMap = productClient.getAllProducts()
                 .stream()
